@@ -1,0 +1,359 @@
+---
+title: "Autokorelasi Spasial Unmet Need Tingkat Desa/Kelurahan"
+author: "Ashari Ramadhan"
+format: html
+editor: visual
+---
+
+## Pendahuluan
+
+Analisis autokorelasi spasial unmet need pada tingkat desa/kelurahan bertujuan untuk mengidentifikasi pola spasial yang signifikan dalam distribusi unmet need. Melalui pendekatan Moran's I global dan Local Indicator of Spatial Association (LISA), kita dapat memahami bagaimana nilai unmet need di suatu desa/kelurahan berkorelasi dengan desa/kelurahan di sekitarnya. Analisis ini membantu dalam mengevaluasi distribusi geografis dan memberikan wawasan terkait daerah yang memerlukan intervensi lebih lanjut.
+
+Tujuan dari analisis autokorelasi spasial ini adalah untuk memahami apakah terdapat hubungan spasial antara desa/kelurahan dengan tingkat unmet need yang tinggi atau rendah. Dengan mengetahui adanya autokorelasi spasial, kita dapat mengidentifikasi pola distribusi unmet need, baik secara global maupun lokal, serta menentukan kluster desa/kelurahan yang memiliki karakteristik serupa. Hasil ini penting untuk merumuskan intervensi kebijakan yang lebih efektif dan terarah, terutama dalam upaya mengurangi tingkat unmet need di daerah yang menunjukkan pola spasial yang signifikan.
+
+```{r}
+#| label: table-un
+#| warning: false
+#| echo: false
+ 
+library(sp)
+library(spdep)
+library(tidyverse)
+library(leaflet)
+library(sf)
+library(data.table)  # Untuk fread
+library(reactablefmtr)
+library(data.table)
+unmet_need <- fread("/home/hi/Documents/projects/profil_desa_r/data/data_pus.csv") %>%
+  filter(Bulan == "AGUSTUS") %>%
+  mutate(UNMET_NEED = (`Unmet Need` / PUS) * 100) %>%
+  select(4, 5, "UNMET_NEED")
+
+unmet_need <- unmet_need %>%
+  arrange(desc(UNMET_NEED)) %>%
+  mutate(UNMET_NEED = paste(round(UNMET_NEED, 2), "%"))
+
+reactable(
+  unmet_need,
+  columns = list(
+    Kecamatan = colDef(name = "KECAMATAN"),
+    Kelurahan_Desa = colDef(name = "KELURAHAN/DESA"),
+    UNMET_NEED = colDef(name = "UNMET NEED")
+  )
+) %>%
+  add_title("Data Unmet Need Agustus 2024", 
+            align = "center", font_color = "black", font_size = 24)
+```
+
+## Sebaran Unmet Need
+
+Histogram berikut menggambarkan distribusi unmet need di tingkat desa/kelurahan:
+
+```{r}
+#| warning: false
+#| echo: false
+#| fig-cap: Sebaran Nilai Unmet Need
+#| fig-height: 3
+#| label: hist
+
+library(ggplot2)
+unmet_need <- fread("/home/hi/Documents/projects/profil_desa_r/data/data_pus.csv") %>%
+  filter(Bulan == "AGUSTUS") %>%
+  mutate(UNMET_NEED = (`Unmet Need` / PUS) * 100) %>%
+  select(4, 5, "UNMET_NEED")
+
+ggplot(unmet_need, aes(x = UNMET_NEED)) +
+  geom_histogram(binwidth = 5, fill = "blue", color = "black") +
+  labs(title = "Histogram Unmet Need", x = "Nilai", y = "Frequency") +
+  theme_minimal()
+```
+
+## Statistik Deskriptif
+
+```{r}
+#| label: statdesk
+#| warning: false
+#| echo: false
+
+# Menghitung statistik deskriptif
+summary_table <- unmet_need %>%
+  summarise(
+    Mean = mean(UNMET_NEED),
+    Median = median(UNMET_NEED),
+    Std_Dev = sd(UNMET_NEED),
+    Variance = var(UNMET_NEED),
+    Min = min(UNMET_NEED),
+    Max = max(UNMET_NEED)
+  )
+
+# Menampilkan tabel hasil
+print(summary_table)
+```
+
+-   Mean (Rata-rata): 10.51333. Rata-rata unmet need adalah sekitar 10.51. Ini menunjukkan bahwa secara umum, nilai unmet need cenderung berada di sekitar angka ini.
+
+-   Median: 8.960968 Median adalah nilai tengah dari dataset yang diurutkan. Nilai ini menunjukkan bahwa 50% dari data berada di bawah 8.96 dan 50% berada di atasnya. Ini memberikan gambaran yang lebih baik tentang nilai unmet need jika data memiliki pencilan atau distribusi yang tidak simetris.
+
+-   Std_Dev (Standar Deviasi): 8.188931 Standar deviasi mengukur seberapa besar variasi atau penyebaran nilai unmet need dari rata-rata. Standar deviasi sebesar 8.19 menunjukkan bahwa ada variasi yang cukup besar dalam data unmet need.
+
+-   Variance (Variansi): 67.05859 Variansi adalah kuadrat dari standar deviasi dan memberikan ukuran yang sama tentang seberapa tersebar nilai-nilai dari rata-rata. Variansi sebesar 67.06 menunjukkan bahwa ada penyebaran yang cukup besar dalam data unmet need.
+
+-   Min (Minimum): 0 Nilai minimum menunjukkan nilai terendah yang ada dalam dataset. Dalam hal ini, ada nilai unmet need yang sangat rendah (0).
+
+-   Max (Maksimum): 48.71795 Nilai maksimum adalah nilai tertinggi dalam dataset. Nilai unmet need tertinggi adalah sekitar 48.72, yang menunjukkan adanya nilai yang cukup tinggi dalam data.
+
+## Moran Test
+
+```{r}
+#| warning: false
+#| echo: false
+#| output: false
+
+peta_desa_646 <- st_read("/home/hi/Documents/projects/penelitia/autokorelasi spasial/BATAS_DESA_SULBAR/BATAS_DESA__SULAWESI_BARAT.shp")
+```
+
+Sebelum melakukan analisis lebih lanjut, kita akan mengevaluasi adanya pola spasial dalam data menggunakan tes Moran's I. Tes ini bertujuan untuk mengukur autokorelasi spasial, yaitu sejauh mana nilai-nilai variabel yang dianalisis cenderung lebih mirip dengan nilai-nilai variabel di lokasi-lokasi yang berdekatan. Selanjutnya, kita akan menghitung nilai Moran's I global untuk melihat apakah terdapat pola clustering yang signifikan dalam data.
+
+```{r}
+#| label: autokorelasi
+#| warning: false
+#| echo: false
+
+
+# Membaca data spasial dan data unmet need
+spatial_data <- read.csv("https://raw.githubusercontent.com/pokja0/profil_desa_r/main/data/profil_poktan.csv") %>%
+  select(3:6)
+
+unmet_need <- fread("/home/hi/Documents/projects/profil_desa_r/data/data_pus.csv") %>%
+  filter(Bulan == "AGUSTUS") %>%
+  mutate(UNMET_NEED = (`Unmet Need` / PUS) * 100) %>%
+  select(4, 5, "UNMET_NEED")
+
+# Menggabungkan data spasial dengan data unmet need
+data_um_spasial <- left_join(spatial_data, unmet_need,
+                             by = c("KECAMATAN" = "Kecamatan", 
+                                    "KELURAHAN" = "Kelurahan_Desa")) %>%
+  mutate(KECAMATAN = ifelse(KECAMATAN == "SIMBORO", "SIMBORO DAN KEPULAUAN", KECAMATAN),
+         KELURAHAN = ifelse(KELURAHAN == "BATANG URU", "BATANG  URU", KELURAHAN),
+         KELURAHAN = ifelse(KELURAHAN == "PAPPANDANGAN", "PAPANDANGAN", KELURAHAN))
+
+# Menggabungkan data dengan peta desa
+peta_desa_646 <- left_join(peta_desa_646, data_um_spasial,
+                           by = c("KECAMATAN" = "KECAMATAN", "DESA_KELUR"="KELURAHAN")) %>%
+  select(5:8, 162:164, "UNMET_NEED")
+
+# Validasi geometri dan perbaiki jika perlu
+valid <- st_is_valid(peta_desa_646)
+if (!all(valid)) {
+  peta_desa_646 <- st_make_valid(peta_desa_646)
+}
+
+# Ambil kolom yang akan dianalisis (misalnya, unmet need)
+variabel <- peta_desa_646$UNMET_NEED
+
+# Mengambil titik centroid dari setiap poligon
+centroid <- st_centroid(peta_desa_646)
+
+# Menghitung tetangga terdekat (misalnya 5 tetangga terdekat)
+k <- 5  # Menentukan jumlah tetangga terdekat
+coords <- st_coordinates(centroid)  # Mendapatkan koordinat centroid
+knn <- knearneigh(coords, k = k)
+
+# Membuat matriks tetangga
+nb_knn <- knn2nb(knn)
+
+# Membuat matriks bobot spasial dari tetangga terdekat
+listw_knn <- nb2listw(nb_knn, style = "W")
+
+# Hitung Moran's I menggunakan bobot KNN
+moran_global_knn <- moran.test(variabel, listw_knn)
+moran_global_knn
+
+```
+
+Hasil uji Moran's I menunjukkan nilai Moran's I statistik sebesar 0.349 dengan p-value yang sangat kecil (kurang dari 2.2e-16).
+
+1.  Moran's I Statistik: Nilai Moran's I sebesar 0.349 menunjukkan adanya autokorelasi spasial positif. Ini berarti bahwa desa/kelurahan dengan nilai unmet need yang tinggi cenderung dikelilingi oleh desa/kelurahan lain dengan nilai unmet need tinggi, dan sebaliknya.
+
+2.  P-Value: P-value yang sangat kecil (lebih kecil dari 2.2e-16) menunjukkan bahwa hasil ini signifikan secara statistik. Dengan kata lain, ada keyakinan yang sangat tinggi bahwa pola autokorelasi spasial yang terdeteksi tidak terjadi secara kebetulan, melainkan mencerminkan pola yang sebenarnya dalam data.
+
+3.  Ekspektasi dan Variansi: Ekspektasi Moran's I adalah -0.00155 dan variansinya adalah 0.00055. Nilai ekspektasi yang mendekati nol dan variansi yang relatif kecil menunjukkan bahwa statistik Moran's I yang diperoleh konsisten dengan distribusi teoretis autokorelasi spasial yang diharapkan jika tidak ada autokorelasi.
+
+Secara keseluruhan, hasil ini menunjukkan adanya pola spasial yang **signifikan** dalam unmet need, mengindikasikan bahwa nilai unmet need di tingkat desa/kelurahan tidak terdistribusi secara acak, **melainkan terkelompok dalam wilayah-wilayah tertentu.**
+
+## LISA (Local Indicator of Spatial Association)
+
+Setelah melakukan uji Moran's I untuk mengidentifikasi adanya autokorelasi spasial global dalam data unmet need, langkah selanjutnya adalah melakukan analisis Local Indicator of Spatial Association (LISA). Uji LISA bertujuan untuk mengungkap pola autokorelasi spasial di tingkat lokal, yang memungkinkan kita untuk mengidentifikasi kluster dan outlier yang mungkin tidak terlihat dalam analisis global. Dengan menggunakan LISA, kita dapat menentukan apakah ada daerah-daerah tertentu yang menunjukkan pola spasial yang signifikan, seperti kluster desa/kelurahan dengan nilai unmet need tinggi atau rendah yang terletak berdekatan, serta mengidentifikasi daerah yang berbeda dari pola umum.
+
+```{r}
+#| label: lisa
+#| warning: false
+#| echo: false
+
+# Menghitung LISA
+lisa <- localmoran(variabel, listw_knn)
+
+# Menentukan kluster berdasarkan nilai I Lokal (lisa[,1]) dan p-value (lisa[,5])
+peta_desa_646 <- peta_desa_646 %>%
+  mutate(cluster = case_when(
+    lisa[,5] >= 0.05 ~ "insignificant",    # p-value >= 0.05 (tidak signifikan)
+    lisa[,1] > 0 & variabel > 13.20 ~ "high-high",  # I > 0 dan nilai variabel tinggi
+    lisa[,1] > 0 & variabel < 13.20  ~ "low-low",    # I > 0 dan nilai variabel rendah
+    lisa[,1] < 0 & variabel > 13.20  ~ "high-low",   # I < 0 dan variabel tinggi
+    lisa[,1] < 0 & variabel < 13.20  ~ "low-high"    # I < 0 dan variabel rendah
+  ))
+
+# Melihat jumlah kluster di setiap kategori
+table(peta_desa_646$cluster)
+```
+
+Hasil dari analisis Local Moran's I telah dikelompokkan berdasarkan nilai Moran's I lokal dan p-value untuk mengidentifikasi pola spasial dan kluster dalam data. Proses pengelompokan dilakukan dengan mengkategorikan setiap lokasi berdasarkan hasil uji Moran's I dan nilai variabel dibandingkan dengan ambang batas yang telah ditetapkan, yaitu 13.20, yang merupakan target unmet need untuk Provinsi Sulawesi Barat.
+
+1.  Kluster 'insignificant' (511): Jika p-value lebih besar dari atau sama dengan 0.05, hasilnya dianggap tidak signifikan, sehingga tidak menunjukkan adanya pola spasial yang jelas.
+
+2.  Kluster 'high-high' (53): Jika nilai Moran's I lokal lebih besar dari 0 dan nilai variabel melebihi 13.20, ini menunjukkan adanya kluster dengan nilai unmet need yang tinggi di lokasi-lokasi yang berdekatan. Ini mengindikasikan bahwa area dengan unmet need tinggi cenderung berada di sekitar area lain dengan unmet need tinggi.
+
+3.  Kluster 'low-low' (59): Jika nilai Moran's I lokal lebih besar dari 0 dan nilai variabel di bawah 13.20, ini menunjukkan adanya kluster dengan nilai unmet need yang rendah di lokasi-lokasi yang berdekatan. Ini berarti area dengan unmet need rendah cenderung berada di sekitar area lain dengan unmet need rendah.
+
+4.  Kluster 'high-low' (3): Jika nilai Moran's I lokal kurang dari 0 dan nilai variabel melebihi 13.20, ini menunjukkan adanya pola di mana area dengan unmet need tinggi dikelilingi oleh area dengan unmet need rendah. Ini mengindikasikan bahwa area dengan unmet need tinggi mungkin berada di sekeliling area yang memiliki unmet need rendah.
+
+5.  Kluster 'low-high' (20): Jika nilai Moran's I lokal kurang dari 0 dan nilai variabel di bawah 13.20, ini menunjukkan adanya pola di mana area dengan unmet need rendah dikelilingi oleh area dengan unmet need tinggi. Ini berarti area dengan unmet need rendah mungkin berada di sekitar area dengan unmet need tinggi.
+
+## Kluster high-high
+
+Berikut desa yang masuk pada kluster high-high:
+
+```{r}
+#| label: table_lisa
+#| warning: false
+#| echo: false
+
+high_high <- peta_desa_646 %>%
+  filter(cluster == "high-high") %>%
+  select(c(1:4,7,9))
+
+colnames(high_high) <- c("Prov", "Kab", "Kec", "Desa/Kel", "Unmet Need", "Kluster", "Geo")
+
+reactable(
+  high_high,
+) %>%
+  add_title("Desa dengan Kluster High High", 
+            align = "center", font_color = "black", font_size = 24)
+
+```
+
+## Peta
+
+### Peta Unmet Need
+
+```{r}
+#| label: peta_leaf
+#| warning: false
+#| echo: false
+
+
+bins <- c(0, 10, 20, 30, 40, 50)
+pal <- colorBin("YlOrRd", domain = peta_desa_646$UNMET_NEED, bins = bins)
+
+labels <- sprintf(
+  "<strong>%s</strong><br/> Unmet Need: %g persen",
+  peta_desa_646$DESA_KELUR, peta_desa_646$UNMET_NEED
+) %>% lapply(htmltools::HTML)
+
+leaflet(peta_desa_646) %>%
+  addTiles() %>%
+  setView(lng = mean(peta_desa_646$LONGITUDE), 
+          lat = mean(peta_desa_646$LATITUDE), 
+          zoom = 8) %>%
+  addPolygons(
+    fillColor = ~pal(UNMET_NEED),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlightOptions = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),
+    label = labels,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "15px",
+      direction = "auto")) %>%
+  addLegend(pal = pal, values = ~UNMET_NEED, opacity = 0.7, title = "%",
+            position = "bottomright")
+
+```
+
+### Peta LISA
+
+```{r}
+#| label: peta_leaf_um
+#| warning: false
+#| echo: false
+
+# # Menambahkan hasil LISA ke data spasial
+peta_desa_646$Ii <- lisa[,1]  # Moran's I lokal
+peta_desa_646$Zi <- lisa[,4]  # Z-score
+# peta_desa_646$cluster <- as.factor(ifelse(lisa_knn[,5] < 0.05, 1, 0))  # Kluster signifikan (p-value < 0.05)
+
+# Definisikan warna untuk setiap kluster
+color_palette <- colorFactor(
+  palette = c("grey", "blue", "lightblue", "orange", "red"),  # Warna untuk tiap kluster
+  levels = c("insignificant", "low-low", "low-high", "high-low", "high-high")
+)
+
+
+labels <- sprintf(
+  "<strong>%s</strong><br/> Unmet Need: %g <br/> Cluster: %s <br/> Moran's I: %g <br/> Z-Score: %g",
+  peta_desa_646$DESA_KELUR, peta_desa_646$UNMET_NEED, peta_desa_646$cluster,
+  peta_desa_646$Ii, peta_desa_646$Zi
+) %>% lapply(htmltools::HTML)
+
+# Membuat peta LISA dengan leaflet
+leaflet(peta_desa_646) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~color_palette(cluster),  # Warna berdasarkan kluster LISA
+    fillOpacity = 0.7,
+    color = "black", weight = 1,
+    label = ~labels
+  ) %>%
+  addLegend(
+    position = "bottomright",
+    pal = color_palette,
+    values = ~cluster,
+    title = "LISA Clusters",
+    opacity = 1
+  )
+
+```
+
+## Kesimpulan, Solusi, dan Perbaikan Penelitian Lanjutan
+
+### Kesimpulan:
+
+Pola Spasial Unmet Need: Hasil analisis autokorelasi spasial menggunakan Moran’s I menunjukkan adanya autokorelasi spasial positif dengan nilai Moran’s I sebesar 0.349 dan p-value yang sangat kecil (kurang dari 2.2e-16). Ini mengindikasikan bahwa desa/kelurahan dengan nilai unmet need yang tinggi cenderung dikelilingi oleh desa/kelurahan lain dengan nilai unmet need tinggi, dan sebaliknya. Dengan kata lain, pola distribusi unmet need tidak acak, tetapi terkelompok dalam wilayah tertentu.
+
+### Solusi:
+
+1.  Prioritasi Intervensi: Fokuskan intervensi dan alokasi sumber daya pada desa/kelurahan dalam kluster 'high-high', di mana unmet need tinggi dan terkelompok dengan area lain yang juga memiliki unmet need tinggi. Ini bisa melibatkan penambahan fasilitas kesehatan, program pendidikan, atau bantuan lainnya untuk menurunkan unmet need di area tersebut.
+
+2.  Evaluasi Terhadap Kluster 'high-low' dan 'low-high': Tinjau lebih dalam mengenai faktor-faktor yang menyebabkan adanya pola 'high-low' dan 'low-high'. Mungkin perlu dilakukan studi kualitatif atau survei untuk memahami mengapa area dengan unmet need tinggi dikelilingi oleh area dengan unmet need rendah dan sebaliknya.
+
+3.  Pemantauan Kluster 'low-low': Meski kluster 'low-low' menunjukkan unmet need rendah, penting untuk memantau area ini untuk memastikan bahwa tidak ada perubahan yang menyebabkan peningkatan unmet need di masa depan.
+
+## Perbaikan
+
+Perbaikan Penelitian Lanjutan:
+
+-   Pengumpulan Data yang Lebih Lengkap: Lakukan pengumpulan data tambahan untuk variabel-variabel lain yang mungkin mempengaruhi unmet need, seperti tingkat ekonomi, aksesibilitas layanan kesehatan, dan faktor sosial-ekonomi. Ini dapat memberikan pemahaman yang lebih mendalam tentang faktor-faktor yang mempengaruhi distribusi unmet need.
+
+-   Analisis Spasial yang Lebih Rinci: Gunakan teknik analisis spasial yang lebih canggih, seperti analisis spasial bayesian atau model spasial multilevel, untuk mendapatkan gambaran yang lebih akurat tentang hubungan antara desa/kelurahan dan distribusi unmet need.
+
+-   Studi Kualitatif dan Survei: Lakukan studi kualitatif dan survei di desa/kelurahan yang termasuk dalam kluster 'high-low' dan 'low-high' untuk memahami dinamika lokal yang mungkin tidak teridentifikasi dalam analisis kuantitatif.
+
+-   Pembaruan Data Secara Berkala: Lakukan pembaruan data secara berkala untuk memantau perubahan dalam unmet need dan menilai efektivitas intervensi yang diterapkan. Ini akan membantu dalam menyesuaikan kebijakan dan strategi berdasarkan perkembangan terbaru.
