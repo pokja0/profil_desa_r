@@ -76,8 +76,8 @@ ui <- page_navbar(
     fluidRow(
       column(4,
              selectInput("pilih_bulan_dataset", "Pilih Bulan", 
-                         choices = daftar_bulan[1:8],
-                         selected = "AGUSTUS")),
+                         choices = daftar_bulan[1:9],
+                         selected = "SEPTEMBER")),
       column(4,
              selectInput("dataset", "Pilih DataFrame:",
                          choices = c("Pembentukan Poktan/Setara" = "poktan_rampung",
@@ -145,8 +145,8 @@ ui <- page_navbar(
         selectInput("pilih_kec", "Pilih Kecamatan", choices = c()),
         selectInput("pilih_desa_kel", "Pilih Desa/Kel", choices = c()),
         selectInput("pilih_bulan", "Pilih Bulan", 
-                    choices = daftar_bulan[1:8],
-                    selected = "AGUSTUS")
+                    choices = daftar_bulan[1:9],
+                    selected = "SEPTEMBER")
         #uiOutput("pilih_bulan"),
       ), #layoyt_column input 1
       layout_column_wrap(
@@ -363,14 +363,10 @@ server <- function(input, output, session) {
   #bs_themer()
   ## data
   # peta
-  batas_sulbar <- reactive({
-    
-    isolate({
-      batas_sulbar <- readRDS("data/batas_sulbar.rds")
-      #batas_sulbar <- readRDS("data/batas_sulbar.rds")
-      #write_fst(batas_sulbar, "data/data_batas_sulbar.fst")
-    })
-  })
+
+  batas_sulbar <- readRDS("data/batas_sulbar.rds")
+  #batas_sulbar <- readRDS("data/batas_sulbar.rds")
+  #write_fst(batas_sulbar, "data/data_batas_sulbar.fst")
   
   #titik_puskesmas <- fread("data/titik_puskesmas.csv")
   #write_fst(titik_puskesmas, "data/data_titik_puskesmas.fst")
@@ -706,7 +702,7 @@ server <- function(input, output, session) {
   #peta
   peta_titik_rekap_task <- ExtendedTask$new(function(kecamatan, desa_kel){
     future_promise({
-      batas_sulbar <- batas_sulbar()
+      batas_sulbar <- batas_sulbar
       kecamatan <- kecamatan
       
       desa_kel <- desa_kel
