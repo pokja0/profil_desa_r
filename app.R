@@ -76,8 +76,8 @@ ui <- page_navbar(
     fluidRow(
       column(4,
              selectInput("pilih_bulan_dataset", "Pilih Bulan", 
-                         choices = daftar_bulan[1:9],
-                         selected = "SEPTEMBER")),
+                         choices = daftar_bulan[1:10],
+                         selected = "OKTOBER")),
       column(4,
              selectInput("dataset", "Pilih DataFrame:",
                          choices = c("Pembentukan Poktan/Setara" = "poktan_rampung",
@@ -145,8 +145,8 @@ ui <- page_navbar(
         selectInput("pilih_kec", "Pilih Kecamatan", choices = c()),
         selectInput("pilih_desa_kel", "Pilih Desa/Kel", choices = c()),
         selectInput("pilih_bulan", "Pilih Bulan", 
-                    choices = daftar_bulan[1:9],
-                    selected = "SEPTEMBER")
+                    choices = daftar_bulan[1:10],
+                    selected = "OKTOBER")
         #uiOutput("pilih_bulan"),
       ), #layoyt_column input 1
       layout_column_wrap(
@@ -160,25 +160,27 @@ ui <- page_navbar(
       h5(textOutput("tes_input_rekap"), style="text-align: center;"),
       navset_card_pill(
         nav_panel(
-          "Kependudukan",
+          "Gambaran Umum",
           layout_column_wrap(
             card(full_screen = T,
                  leafletOutput("peta_titik_rekap")
             ),
             card(
               layout_column_wrap(
-                uiOutput("card_profil_poktan_rekap"),
-                uiOutput("card_profil_sd_rekap")
-              )
+                plotlyOutput("grafik_piramida_rekap"), 
+              ),
+              full_screen = T
             )
           ),
           layout_column_wrap(
             card(
-              plotlyOutput("grafik_piramida_rekap"), 
-              full_screen = T
+              uiOutput("card_profil_poktan_rekap"),
             ),
             card(
-              reactableOutput("tabel_piramida_rekap")
+              uiOutput("card_profil_sd_rekap")
+            ),
+            card(
+              "PRO PN (on progress)"
             )
           ), #layout column
           fluidRow(
@@ -253,7 +255,7 @@ ui <- page_navbar(
             shiny::column(3,
                           uiOutput("profil_stunting_rekap"),
                           navset_card_underline(
-                            title = "Faktor Resiko KRS",
+                            title = "Faktor KRS",
                             nav_panel(
                               "Jumlah", 
                               plotlyOutput("bar_faktor_resiko_jumlah")
@@ -1047,68 +1049,68 @@ server <- function(input, output, session) {
     
   })
   
-  output$tabel_piramida_rekap <- renderReactable({
-    req(input$cari_rekap)
-    kecamatan <- value_filter_kec()
-    desa_kel <- value_filter_desa_kel()
-    kelompok_umur_lk <- kelompok_umur_lk %>%
-      filter(KECAMATAN %in% kecamatan, KELURAHAN %in% desa_kel) %>%
-      group_by(PROVINSI) %>%
-      summarise_if(is.numeric, sum)  %>%
-      gather("Kelompok_Umur", "Jumlah", 4:20) %>%
-      mutate(Jenis_Kelamin = rep("Laki-laki", 17))
-    
-    kelompok_umur_pr <- kelompok_umur_pr %>%
-      filter(KECAMATAN %in% kecamatan, KELURAHAN %in% desa_kel) %>%
-      group_by(PROVINSI) %>%
-      summarise_if(is.numeric, sum)  %>%
-      gather("Kelompok_Umur", "Jumlah", 4:20) %>%
-      mutate(Jenis_Kelamin = rep("Peremupuan", 17))
-    
-    tabel_piramida <- left_join(kelompok_umur_lk, kelompok_umur_pr,
-                                by = "Kelompok_Umur") %>%
-      rename(Laki_Laki = Jumlah.x, Perempuan = Jumlah.y) %>%
-      group_by(Kelompok_Umur) %>%
-      mutate(Total = sum(Laki_Laki + Perempuan)) 
-    
-    tabel_piramida <- as_tibble(tabel_piramida)
-    
-    ku <- c("0 - 1",	"2 - 4",	"5 - 9",	"10 - 14",	"15 - 19",
-            "20 - 24",	"25 - 29",	"30 - 34",	"35 - 39",	"40 - 44",
-            "45 - 49",	"50 - 54",	"55 - 59	", "60 - 64",
-            "65 - 69",	"70 - 74",	"75+")
-    
-    tabel_piramida$Kelompok_Umur <- factor(ku, levels = ku)
-    
-    tabel_piramida <- tabel_piramida %>%  
-      select(4,5,10,12) %>%
-      bind_rows(summarise(., across(where(is.numeric), sum),
-                          across(where(is.factor), ~'Total')))
-    colnames(tabel_piramida) <- c("Umur", "Laki-laki", "Perempuan", "Total")
-    reactable(tabel_piramida,
-              columns = list(
-                `Laki-laki` = colDef(
-                  format = colFormat(separators = TRUE, locales = "en-US")
-                ),
-                Perempuan = colDef(
-                  format = colFormat(separators = TRUE, locales = "en-US")
-                ),
-                Total = colDef(
-                  format = colFormat(separators = TRUE, locales = "en-US")
-                )
-              ),
-              bordered = TRUE,
-              striped = TRUE,
-              highlight = TRUE,
-              theme = reactableTheme(
-                borderColor = "#dfe2e5",
-                stripedColor = "#f6f8fa",
-                highlightColor = "#f0f5f9",
-                cellPadding = "8px 12px",
-                style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"),
-                searchInputStyle = list(width = "100%"))
-    )
-  })
+  # output$tabel_piramida_rekap <- renderReactable({
+  #   req(input$cari_rekap)
+  #   kecamatan <- value_filter_kec()
+  #   desa_kel <- value_filter_desa_kel()
+  #   kelompok_umur_lk <- kelompok_umur_lk %>%
+  #     filter(KECAMATAN %in% kecamatan, KELURAHAN %in% desa_kel) %>%
+  #     group_by(PROVINSI) %>%
+  #     summarise_if(is.numeric, sum)  %>%
+  #     gather("Kelompok_Umur", "Jumlah", 4:20) %>%
+  #     mutate(Jenis_Kelamin = rep("Laki-laki", 17))
+  #   
+  #   kelompok_umur_pr <- kelompok_umur_pr %>%
+  #     filter(KECAMATAN %in% kecamatan, KELURAHAN %in% desa_kel) %>%
+  #     group_by(PROVINSI) %>%
+  #     summarise_if(is.numeric, sum)  %>%
+  #     gather("Kelompok_Umur", "Jumlah", 4:20) %>%
+  #     mutate(Jenis_Kelamin = rep("Peremupuan", 17))
+  #   
+  #   tabel_piramida <- left_join(kelompok_umur_lk, kelompok_umur_pr,
+  #                               by = "Kelompok_Umur") %>%
+  #     rename(Laki_Laki = Jumlah.x, Perempuan = Jumlah.y) %>%
+  #     group_by(Kelompok_Umur) %>%
+  #     mutate(Total = sum(Laki_Laki + Perempuan)) 
+  #   
+  #   tabel_piramida <- as_tibble(tabel_piramida)
+  #   
+  #   ku <- c("0 - 1",	"2 - 4",	"5 - 9",	"10 - 14",	"15 - 19",
+  #           "20 - 24",	"25 - 29",	"30 - 34",	"35 - 39",	"40 - 44",
+  #           "45 - 49",	"50 - 54",	"55 - 59	", "60 - 64",
+  #           "65 - 69",	"70 - 74",	"75+")
+  #   
+  #   tabel_piramida$Kelompok_Umur <- factor(ku, levels = ku)
+  #   
+  #   tabel_piramida <- tabel_piramida %>%  
+  #     select(4,5,10,12) %>%
+  #     bind_rows(summarise(., across(where(is.numeric), sum),
+  #                         across(where(is.factor), ~'Total')))
+  #   colnames(tabel_piramida) <- c("Umur", "Laki-laki", "Perempuan", "Total")
+  #   reactable(tabel_piramida,
+  #             columns = list(
+  #               `Laki-laki` = colDef(
+  #                 format = colFormat(separators = TRUE, locales = "en-US")
+  #               ),
+  #               Perempuan = colDef(
+  #                 format = colFormat(separators = TRUE, locales = "en-US")
+  #               ),
+  #               Total = colDef(
+  #                 format = colFormat(separators = TRUE, locales = "en-US")
+  #               )
+  #             ),
+  #             bordered = TRUE,
+  #             striped = TRUE,
+  #             highlight = TRUE,
+  #             theme = reactableTheme(
+  #               borderColor = "#dfe2e5",
+  #               stripedColor = "#f6f8fa",
+  #               highlightColor = "#f0f5f9",
+  #               cellPadding = "8px 12px",
+  #               style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"),
+  #               searchInputStyle = list(width = "100%"))
+  #   )
+  # })
   
   #
   output$jumlah_keluarga <- renderText({
