@@ -76,8 +76,8 @@ ui <- page_navbar(
     fluidRow(
       column(4,
              selectInput("pilih_bulan_dataset", "Pilih Bulan", 
-                         choices = daftar_bulan[1:10],
-                         selected = "OKTOBER")),
+                         choices = daftar_bulan[1:11],
+                         selected = "NOVEMBER")),
       column(4,
              selectInput("dataset", "Pilih DataFrame:",
                          choices = c("Pembentukan Poktan/Setara" = "poktan_rampung",
@@ -145,8 +145,8 @@ ui <- page_navbar(
         selectInput("pilih_kec", "Pilih Kecamatan", choices = c()),
         selectInput("pilih_desa_kel", "Pilih Desa/Kel", choices = c()),
         selectInput("pilih_bulan", "Pilih Bulan", 
-                    choices = daftar_bulan[1:10],
-                    selected = "OKTOBER")
+                    choices = daftar_bulan[1:11],
+                    selected = "NOVEMBER")
         #uiOutput("pilih_bulan"),
       ), #layoyt_column input 1
       layout_column_wrap(

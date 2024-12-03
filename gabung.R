@@ -4,9 +4,7 @@ daftar_desa <- read_fst("data/data_daftar_desa.fst")
 # write.fst(bkb, "data/data_bkb.fst")
 bkb <- read_fst("data/data_bkb.fst")
 
-bkb <- bkb %>%
-  select(-c(V1, BATAS))
-bkb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-bkb.xlsx")
+bkb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov-bkb.xlsx")
 
 bkb_scrap <- bkb_scrap %>%
   dplyr::group_by(Provinsi, Kabupaten, Kecamatan, Kelurahan_Desa) %>%
@@ -17,13 +15,13 @@ bkb_scrap <- bkb_scrap %>%
                                 "Kelurahan_Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("OKTOBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 648))
 
 colnames(bkb_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_BKB", "BULAN")
 
 sum(bkb_scrap$JUMLAH_BKB)
 
-#kolom_v1 <- rep("SEPTEMBER", 648)
+#kolom_v1 <- rep("NOVEMBER", 648)
 
 bkb <- rbind(bkb, bkb_scrap)
 
@@ -33,7 +31,7 @@ write_fst(bkb, "data/data_bkb.fst")
 # bkr <- fread("data/data_bkr.csv")
 # write.fst(bkr, "data/data_bkr.fst")
 bkr <- read_fst("data/data_bkr.fst")
-bkr_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-data_bkr_result.xlsx")
+bkr_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/Nov-data_bkr_result.xlsx")
 
 bkr_scrap <- bkr_scrap %>%
   dplyr::group_by(Provinsi, Kabupaten, Kecamatan, Kelurahan_Desa) %>%
@@ -44,7 +42,7 @@ bkr_scrap <- bkr_scrap %>%
                                 "Kelurahan_Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("SEPTEMBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 1))
 
 colnames(bkr_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_BKR", "BULAN")
 
@@ -57,9 +55,8 @@ write_fst(bkr, "data/data_bkr.fst")
 # bkl <- fread("data/data_bkl.csv")
 # write.fst(bkl, "data/data_bkl.fst")
 bkl <- read_fst("data/data_bkl.fst")
-bkl <- bkl %>%
-  select(-c(V1, BATAS))
-bkl_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-data_bkl_result.xlsx")
+
+bkl_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov-data_bkl_result.xlsx")
 
 bkl_scrap <- bkl_scrap %>%
   dplyr::group_by(Provinsi, Kabupaten, Kecamatan, Kelurahan_Desa) %>%
@@ -70,7 +67,7 @@ bkl_scrap <- bkl_scrap %>%
                                 "Kelurahan_Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("OKTOBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 648))
 
 colnames(bkl_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_BKL", "BULAN")
 
@@ -83,9 +80,8 @@ write_fst(bkl, "data/data_bkl.fst")
 # uppka <- fread("data/data_uppka.csv")
 # write.fst(uppka, "data/data_uppka.fst")
 uppka <- read_fst("data/data_uppka.fst")
-uppka <- uppka %>%
-  select(-c(V1, BATAS))
-uppka_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-data_uppka_result.xlsx")
+
+uppka_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov-data_uppka_result.xlsx")
 
 uppka_scrap <- uppka_scrap %>%
   dplyr::group_by(Provinsi, Kabupaten, Kecamatan, Kelurahan_Desa) %>%
@@ -96,7 +92,7 @@ uppka_scrap <- uppka_scrap %>%
                                 "Kelurahan_Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("OKTOBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 648))
 
 colnames(uppka_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_UPPKA", "BULAN")
 
@@ -109,9 +105,8 @@ write_fst(uppka, "data/data_uppka.fst")
 # pikr <- fread("data/data_pikr.csv")
 # write.fst(pikr, "data/data_pikr.fst")
 pikr <- read_fst("data/data_pikr.fst")
-pikr <- pikr %>%
-  select(-c(V1, BATAS))
-pikr_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt_k0_pikr330.xlsx")
+
+pikr_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov_k0_pikr.xlsx")
 
 pikr_scrap <- pikr_scrap %>%
   dplyr::group_by(Provinsi, Kabupaten, Kecamatan, `Kelurahan/Desa`) %>%
@@ -122,7 +117,7 @@ pikr_scrap <- pikr_scrap %>%
                                 "Kelurahan/Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("OKTOBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 648))
 
 colnames(pikr_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_PIKR", "BULAN")
 
@@ -137,8 +132,8 @@ write_fst(pikr, "data/data_pikr.fst")
 kkb <- read_fst("data/data_kkb.fst")
 kkb <- kkb %>%
   select(-c(V1, BATAS))
-kkb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt_k0_kkb.xlsx")
-kkb_scrap$BULAN <- "OKTOBER"
+kkb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov_mentahan_k0_kkb.xlsx")
+kkb_scrap$BULAN <- "NOVEMBER"
 kkb_scrap <- kkb_scrap %>%
   select(-...1)
 kkb_scrap <- kkb_scrap %>%
@@ -150,7 +145,7 @@ kkb_scrap <- kkb_scrap %>%
                                 "Kelurahan/Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("SEPTEMBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 648))
 
 colnames(kkb_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_KKB", "BULAN")
 
@@ -165,7 +160,7 @@ write_fst(kkb, "data/data_kkb.fst")
 rdk <- read_fst("data/data_rdk.fst")
 rdk <- rdk %>%
   select(-c(V1, BATAS))
-rdk_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-data_k0_rdk.xlsx")
+rdk_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov-data_k0_rdk.xlsx")
 
 rdk_scrap <- rdk_scrap %>%
   dplyr::group_by(Provinsi, Kabupaten, Kecamatan, `Kelurahan/Desa`) %>%
@@ -176,7 +171,7 @@ rdk_scrap <- rdk_scrap %>%
                                 "Kelurahan/Desa" = "KELURAHAN")) %>%
   replace_na(list(JUMLAH = 0)) %>%
   ungroup() %>%
-  mutate(BULAN = rep("OKTOBER", 648))
+  mutate(BULAN = rep("NOVEMBER", 648))
 
 colnames(rdk_scrap) <- c("PROVINSI", "KABUPATEN", "KECAMATAN", "KELURAHAN", "JUMLAH_RDK", "BULAN")
 
@@ -190,14 +185,14 @@ write_fst(rdk, "data/data_rdk.fst")
 sdm_kb <- read_fst("data/data_faskes_siga.fst")
 sdm_kb <- sdm_kb %>%
   select(-c(BATAS))
-sdm_kb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-faskes_siga.xlsx")
+sdm_kb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov-faskes_siga_724.xlsx")
 colnames(sdm_kb_scrap)[1] <- "V1"
 
 sdm_kb <- rbind(sdm_kb, sdm_kb_scrap)
 write_fst(sdm_kb, "data/data_faskes_siga.fst")
 
 ##mix
-data_mix_kontra_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt - kb_kontra1.xlsx")
+data_mix_kontra_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov - kb_kontra1.xlsx")
 colnames(data_mix_kontra_scrap)[1] <- "V1"
 
 write_fst(data_mix_kontra_scrap, "data/data_mix_kontra.fst")
@@ -205,7 +200,7 @@ write_fst(data_mix_kontra_scrap, "data/data_mix_kontra.fst")
 ##pus
 data_pus <- read_fst("data/data_pus.fst")
 
-data_pus_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/okt-pus1.xlsx")
+data_pus_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/nov-pus1.xlsx")
 colnames(data_pus_scrap)[1] <- "V1"
 
 write_fst(data_pus_scrap, "data/data_pus.fst")
