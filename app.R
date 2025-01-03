@@ -23,7 +23,7 @@ rekap_desa_verval_krs <- as.data.table(read_fst("data/rekap_desa_verval_krs.fst"
 verval_krs_peta <- as.data.table(fst::read_fst("data/verval_krs_dashboard_peta.fst"))
 
 ui = dashboardPage(
- # preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#343a40"),
+  preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#343a40"),
   header = dashboardHeader(title = "Profil Desa"),
   body = dashboardBody(
     tabItems(
@@ -278,13 +278,8 @@ ui = dashboardPage(
             column(
               3,
               selectInput(
-                "jenis_sasaran_genting", label = "Pilih Data", choices = c("Semua", "Jamban", "Sumber Air + 4T")
-              )
-            ),
-            column(
-              3,
-              selectInput(
-                "kabupaten_genting", label = "Pilih Kabupaten", choices = NULL
+                "kabupaten_genting", label = "Pilih Kabupaten", 
+                choices = c("SEMUA KABUPATEN", "POLEWALI MANDAR", "MAMASA", "PASANGKAYU", "MAMUJU", "MAMUJU TENGAH", "MAJENE")
               )
             ),
             column(
@@ -292,14 +287,19 @@ ui = dashboardPage(
               selectInput(
                 "kecamatan_genting", label = "Pilih Kecamatan", choices = NULL
               )
-            ),
+            )
+          ), #fluid row
+          fluidRow(
+            "a"
+          ), #fluid
+          fluidRow(
             column(
               3,
               input_task_button(
                 "cari_genting", "Cari"
               )
             )
-          ) #fluid row
+          )
         ) #bscard
       ) #tab item
     )
@@ -2646,6 +2646,24 @@ server = function(input, output, session) {
   })
   ## batas krs judul
   # batas krs
+  observeEvent(input$kabupaten_genting, {
+    if (input$kabupaten_genting == "SEMUA KABUPATEN") {
+      
+      updateSelectInput(session, "kecamatan_genting",
+                        choices = c("SEMUA KECAMATAN"))
+    } else {
+      daftar_kecamatan = verval_krs_peta |>
+        fsubset(nama_kabupaten == input$kabupaten_genting, nama_kecamatan)
+      
+      #daftar_kecamatan = daftar_kecamatan$KECAMATAN
+      updateSelectInput(session, "kecamatan_genting",
+                        choices = c("SEMUA KECAMATAN",
+                                    unique(daftar_kecamatan$nama_kecamatan)))
+    }
+  })
+  # genting
+
+  # batas genting
 }
 
 shinyApp(ui, server)
