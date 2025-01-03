@@ -124,7 +124,7 @@ ui = dashboardPage(
                 strong("Tempat Pelayanan KB"),
                 style = "font-size:20px;")),
               textOutput("vb_tp_kb_rekap"),
-              showcase = bs_icon("person-square"),
+              showcase = bs_icon("hospital"),
               theme = value_box_theme(bg = "#f6f8fa", fg = "#0B538E")
             ),
             uiOutput("vb_mkjp_rekap")
@@ -375,7 +375,8 @@ ui = dashboardPage(
       menuItem(
         text = "Gambaran Umum",
         tabName = "gambaran_umum",
-        icon = icon("house")
+        icon = icon("house"),
+        selected = TRUE
       ),
       menuItem(
         text = "Keluarga Berencana",
@@ -390,8 +391,7 @@ ui = dashboardPage(
       menuItem(
         text = "Genting",
         tabName = "genting",
-        icon = icon("people-pulling"),
-        selected = TRUE
+        icon = icon("people-pulling")
       )
     )
   ) #sidebar
@@ -1371,7 +1371,7 @@ server = function(input, output, session) {
         text_un,
         style = "font-size:12px;"
       ),
-      showcase = bs_icon("clipboard"),
+      showcase = bs_icon("person-fill-x"),
       theme = value_box_theme(bg = "#f6f8fa", fg = "#0B538E")
     )
   })
@@ -1483,7 +1483,7 @@ server = function(input, output, session) {
         text_un,
         style = "font-size:12px;"
       ),
-      showcase = bs_icon("clipboard"),
+      showcase = bs_icon("capsule-pill"),
       theme = value_box_theme(bg = "#f6f8fa", fg = "#0B538E")
     )
   })
@@ -1989,14 +1989,14 @@ server = function(input, output, session) {
         value_box(
           title = "Jumlah PKB",
           value = nama_pkb$n,
-          showcase = bs_icon("person-x"),
+          showcase = bs_icon("person-arms-up"),
           theme = value_box_theme(bg = "#f6f8fa", fg = "#0B538E"),
           p("PKB (Penyuluh Keluarga Berencana)")
         ),
         value_box(
           title = "Jumlah TPK",
           value = nama_tpk$n,
-          showcase = bs_icon("person"),
+          showcase = bs_icon("person-hearts"),
           theme = value_box_theme(bg = "#f6f8fa", fg = "#0B538E"),
           p("TPK (Tim Pendamping Keluarga)")
         )
