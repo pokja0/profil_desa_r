@@ -1546,16 +1546,7 @@ server = function(input, output, session) {
         font = list(color = "white"),
         paper_bgcolor = "transparent",
         plot_bgcolor = "transparent"
-      ) |>
-      config(displayModeBar = F) |>
-      htmlwidgets::onRender(
-        "function(el) {
-      el.closest('.bslib-value-box')
-        .addEventListener('bslib.card', function(ev) {
-          Plotly.relayout(el, {'xaxis.visible': ev.detail.fullScreen});
-        })
-    }"
-      )
+      ) 
   })
   
   output$jumlah_mcpr <- renderText({
@@ -1592,14 +1583,14 @@ server = function(input, output, session) {
     filter_desa <- value_filter_desa_kel_kb()
     filter_bulan <- pilih_sampai_bulan(value_filter_bulan_kb())
     
-    jumlah_pus_plot = data_pus |>
+    jumlah_pus_plot = data_pus %>%
       fsubset(
         Kabupaten %in% filter_kabupaten &
         Kecamatan %in% filter_kecamatan &
         Kelurahan_Desa %in% filter_desa &
         Bulan %in% filter_bulan
-      ) |>
-      fgroup_by(Bulan) |>
+      ) %>%
+      fgroup_by(Bulan) %>%
       fsummarise(PUS = sum(PUS))
     
     jumlah_mcpr_plot = data_mix_kontra |>
@@ -1640,15 +1631,6 @@ server = function(input, output, session) {
         font = list(color = "white"),
         paper_bgcolor = "transparent",
         plot_bgcolor = "transparent"
-      ) |>
-      config(displayModeBar = F) |>
-      htmlwidgets::onRender(
-        "function(el) {
-      el.closest('.bslib-value-box')
-        .addEventListener('bslib.card', function(ev) {
-          Plotly.relayout(el, {'xaxis.visible': ev.detail.fullScreen});
-        })
-    }"
       )
   })
   
@@ -2602,11 +2584,7 @@ server = function(input, output, session) {
     baru_faktor_resiko |>
       layout(
         bargap = 0.4
-      ) |>
-      config(displayModeBar = FALSE) |>
-      config(displaylogo = FALSE) |>
-      config(scrollZoom = FALSE) |>
-      config(edits = list(editType = "plotly"))
+      )
     
   })
   
@@ -2679,11 +2657,7 @@ server = function(input, output, session) {
     baru_faktor_resiko |>
       layout(
         bargap = 0.4
-      ) |>
-      config(displayModeBar = FALSE) |>
-      config(displaylogo = FALSE) |>
-      config(scrollZoom = FALSE) |>
-      config(edits = list(editType = "plotly"))
+      ) 
     
   })
   
