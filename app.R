@@ -23,7 +23,7 @@ rekap_desa_verval_krs <- as.data.table(read_fst("data/rekap_desa_verval_krs.fst"
 verval_krs_peta <- as.data.table(fst::read_fst("data/verval_krs_dashboard_peta.fst"))
 
 ui = dashboardPage(
-  preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#343a40"),
+ # preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#343a40"),
   header = dashboardHeader(title = "Profil Desa"),
   body = dashboardBody(
     tabItems(
