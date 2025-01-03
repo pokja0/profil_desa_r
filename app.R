@@ -13,6 +13,8 @@ library(plotly)
 library(gt)
 library(bsicons)
 library(stringr)
+library(sf)
+library(httr)
 
 daftar_bulan = c("JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER")
 data_poktan = read_fst("data/data_profil_poktan.fst")
@@ -2754,40 +2756,40 @@ server = function(input, output, session) {
     value_filter_kec_genting(filter_kecamatan) 
   })
   
-  # Observe click events
+#  Observe click events
   observeEvent(input$map_genting_titik_click, {
     click <- input$map_genting_titik_click
     if (!is.null(click)) {
       # Extract latitude and longitude
       lat <- click$lat
       lng <- click$lng
-      
+
       # Perform reverse geocoding with Nominatim
       url <- paste0("https://nominatim.openstreetmap.org/reverse?format=json",
                     "&lat=", lat,
                     "&lon=", lng)
       res <- GET(url, user_agent("R"))
       data <- content(res)
-      
+
       # Extract address
       address <- if (!is.null(data$address)) {
         paste(data$address$road, data$address$city, data$address$country, lat, lng, sep = ", ")
       } else {
         "Alamat tidak ditemukan"
       }
-      
+
       # Output address
       output$address <- renderText({ paste("Alamat:", address) })
     }
   })
-  
+
   data_peta <- eventReactive(input$cari_genting,{
       dataset = as.data.table(rekap_desa_verval_krs)
-      
+      peta_desa_646 <- readRDS("data/BATAS_DESA__SULAWESI_BARAT.rds")
       peta_desa_646 <- merge(peta_desa_646, dataset, 
                              by.x = c("KECAMATAN","DESA_KELUR"), by.y = c("nama_kecamatan", "nama_kelurahan"), 
                              all.x = TRUE, all.y = FALSE)
-      peta_desa_646 <- peta_desa_646[, c(1:2, 7:8, 164:167)] |>
+      peta_desa_646 <- peta_desa_646[, c(1:2, 7:8, 164:167, 162)] |>
         fmutate(sasaran_prioritas_genting_1 = ifelse(is.na(sasaran_prioritas_genting_1), 0, sasaran_prioritas_genting_1))
       
   })
@@ -2807,17 +2809,17 @@ server = function(input, output, session) {
     labels <- sprintf(
       "Kecamatan <strong>%s</strong> <br/> Desa/Kelurahan <strong>%s</strong><br/> KRS: %g ",
       peta_desa_646$KECAMATAN, peta_desa_646$DESA_KELUR, peta_desa_646$sasaran_prioritas_genting_1
-    ) %>% lapply(htmltools::HTML)
+    ) |> lapply(htmltools::HTML)
     
-    leaflet(data = peta_desa_646) %>%
-      addProviderTiles(providers$OpenStreetMap, group = "Alamat Jalan") %>%
-      addProviderTiles(providers$OpenTopoMap, group = "Topografi") %>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Citra Satelit") %>%
-      addProviderTiles(providers$Esri.WorldTopoMap, group = "Topo dan Jalan") %>%
+    leaflet(data = st_as_sf(peta_desa_646)) |>
+      addProviderTiles(providers$OpenStreetMap, group = "Alamat Jalan") |>
+      addProviderTiles(providers$OpenTopoMap, group = "Topografi") |>
+      addProviderTiles(providers$Esri.WorldImagery, group = "Citra Satelit") |>
+      addProviderTiles(providers$Esri.WorldTopoMap, group = "Topo dan Jalan") |>
       addLayersControl(
         baseGroups = c("Alamat Jalan", "Topografi", "Citra Satelit", "Topo dan Jalan"),
         options = layersControlOptions(collapsed = FALSE)
-      ) %>%
+      ) |>
       addPolygons(
         fillColor = ~pal(sasaran_prioritas_genting_1),
         weight = 1,
@@ -2831,7 +2833,7 @@ server = function(input, output, session) {
         ),
         label = labels
         #popup = ~paste0("Total KRS: ", round(Total, 2), "\n Desa/Kelurahan:", DESA_KELUR)
-      ) %>%
+      ) |>
       addLegend(
         pal = pal,
         values = ~sasaran_prioritas_genting_1,
@@ -2889,7 +2891,7 @@ server = function(input, output, session) {
       filter_empat_t = c(2)
     }
   
-    data_titik <- verval_krs_peta %>%
+    data_titik <- verval_krs_peta |>
       fsubset(
         nama_kabupaten %in% value_filter_kab_genting() &
         nama_kecamatan %in% value_filter_kec_genting() & 
@@ -2901,7 +2903,7 @@ server = function(input, output, session) {
           kondisi_fasilitas_bab %in% filter_bab &
           !is.na(longitude) &
           !is.na(latitude)
-      ) %>%
+      ) |>
       fmutate(longitude = as.numeric(longitude),
               latitude = as.numeric(latitude))
   })
@@ -2911,7 +2913,7 @@ server = function(input, output, session) {
       fmutate(kode_keluarga = paste0(substr(kode_keluarga, 1, 15), "xxxxx"))
     
     leaflet(data_titik) |>
-      addProviderTiles(providers$Esri.WorldImagery) %>%
+      addProviderTiles(providers$Esri.WorldImagery) |>
       setView(lng = mean(data_titik$longitude), lat = mean(data_titik$latitude), zoom = 12) |>
       addMarkers(lng = data_titik$longitude, lat = data_titik$latitude, # Longitude dan Latitude
                  popup = ~paste(
