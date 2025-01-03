@@ -17,13 +17,15 @@ library(stringr)
 daftar_bulan = c("JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER")
 data_poktan = read_fst("data/data_profil_poktan.fst")
 
-rekap_desa_verval_krs <- as.data.table(read_fst("data/rekap_desa_verval_krs.fst"))
+rekap_desa_verval_krs <- read_fst("data/rekap_desa_verval_krs.fst")
 
 #sasaran_genting <- fst::read_fst("DATASET KRS SASARAN GENTING/bnba_keluarga_genting_sulawesi barat.fst")
-verval_krs_peta <- as.data.table(fst::read_fst("data/verval_krs_dashboard_peta.fst"))
+verval_krs_peta <- fst::read_fst("data/verval_krs_dashboard_peta.fst")
+
+peta_desa_646 <- readRDS("data/BATAS_DESA__SULAWESI_BARAT.rds")
 
 ui = dashboardPage(
-  preloader = list(html = tagList(spin_1(), "Loading ..."), color = "#343a40"),
+  preloader = list(html = tagList(spin_1(), "Mohon ditunggu ya ..."), color = "#343a40"),
   header = dashboardHeader(title = "Profil Desa"),
   body = dashboardBody(
     tabItems(
@@ -290,7 +292,50 @@ ui = dashboardPage(
             )
           ), #fluid row
           fluidRow(
-            "a"
+            column(
+              3,
+              selectInput(
+                "memiliki_baduta", "Keluarga Memiliki Baduta", 
+                choices = c("Semua", "Ya", "Tidak")
+              )
+            ),
+            column(
+              3,
+              selectInput(
+                "memiliki_balita", "Keluarga Memiliki Balita", 
+                choices = c("Semua", "Ya", "Tidak")
+              )
+            ),
+            column(
+              3,
+              selectInput(
+                "memiliki_pus_hamil", "Keluarga PUS Hamil", 
+                choices = c("Semua", "Ya", "Tidak")
+              )
+            )
+          ), #fluid
+          fluidRow(
+            column(
+              3,
+              selectInput(
+                "air_minum", "Sumber Air Minum Utama", 
+                choices = c("Semua", "Layak", "Tidak Layak")
+              )
+            ),
+            column(
+              3,
+              selectInput(
+                "tempat_bab", "Fasilitas BAB", 
+                choices = c("Semua", "Layak", "Tidak Layak")
+              )
+            ),
+            column(
+              3,
+              selectInput(
+                "empat_t", "4 Terlalu", 
+                choices = c("Semua", "Ya", "Tidak")
+              )
+            )
           ), #fluid
           fluidRow(
             column(
@@ -300,7 +345,23 @@ ui = dashboardPage(
               )
             )
           )
-        ) #bscard
+        ), #bscard
+        tabBox(width = 12, title = verbatimTextOutput("address"),
+          tabPanel(
+            "Polygon", 
+            card(
+              full_screen = T,
+              leafletOutput("map_genting")
+            )
+          ),
+          tabPanel(
+            "Titik", 
+            card(
+              full_screen = T,
+              leafletOutput("map_genting_titik")
+            )
+          )
+        )
       ) #tab item
     )
   ),
@@ -2646,6 +2707,8 @@ server = function(input, output, session) {
   })
   ## batas krs judul
   # batas krs
+
+  # genting
   observeEvent(input$kabupaten_genting, {
     if (input$kabupaten_genting == "SEMUA KABUPATEN") {
       
@@ -2661,8 +2724,205 @@ server = function(input, output, session) {
                                     unique(daftar_kecamatan$nama_kecamatan)))
     }
   })
-  # genting
-
+  
+  value_filter_kab_genting <- reactiveVal(0)       # rv <- reactiveValues(value = 0)
+  
+  observeEvent(input$cari_genting, {
+    kondisi_input = input$kabupaten_genting
+    if (kondisi_input == "SEMUA KABUPATEN"){
+      filter_kabupaten = unique(verval_krs_peta$nama_kabupaten)
+    } else{
+      filter_kabupaten = input$kabupaten_genting
+    }
+    value_filter_kab_genting(filter_kabupaten) 
+  })
+  
+  #kecamatan
+  value_filter_kec_genting <- reactiveVal(0)       # rv <- reactiveValues(value = 0)
+  
+  observeEvent(input$cari_genting, {
+    kondisi_input = input$kecamatan_genting
+    filter_kabupaten = value_filter_kab_genting()
+    
+    if (kondisi_input == "SEMUA KECAMATAN"){
+      daftar_kecamatan = verval_krs_peta |>
+        fsubset(nama_kabupaten %in% filter_kabupaten, nama_kecamatan)
+      filter_kecamatan = unique(daftar_kecamatan$nama_kecamatan)
+    } else{
+      filter_kecamatan = input$kecamatan_genting
+    }
+    value_filter_kec_genting(filter_kecamatan) 
+  })
+  
+  # Observe click events
+  observeEvent(input$map_genting_titik_click, {
+    click <- input$map_genting_titik_click
+    if (!is.null(click)) {
+      # Extract latitude and longitude
+      lat <- click$lat
+      lng <- click$lng
+      
+      # Perform reverse geocoding with Nominatim
+      url <- paste0("https://nominatim.openstreetmap.org/reverse?format=json",
+                    "&lat=", lat,
+                    "&lon=", lng)
+      res <- GET(url, user_agent("R"))
+      data <- content(res)
+      
+      # Extract address
+      address <- if (!is.null(data$address)) {
+        paste(data$address$road, data$address$city, data$address$country, lat, lng, sep = ", ")
+      } else {
+        "Alamat tidak ditemukan"
+      }
+      
+      # Output address
+      output$address <- renderText({ paste("Alamat:", address) })
+    }
+  })
+  
+  data_peta <- eventReactive(input$cari_genting,{
+      dataset = as.data.table(rekap_desa_verval_krs)
+      
+      peta_desa_646 <- merge(peta_desa_646, dataset, 
+                             by.x = c("KECAMATAN","DESA_KELUR"), by.y = c("nama_kecamatan", "nama_kelurahan"), 
+                             all.x = TRUE, all.y = FALSE)
+      peta_desa_646 <- peta_desa_646[, c(1:2, 7:8, 164:167)] |>
+        fmutate(sasaran_prioritas_genting_1 = ifelse(is.na(sasaran_prioritas_genting_1), 0, sasaran_prioritas_genting_1))
+      
+  })
+  
+  output$map_genting <- renderLeaflet({
+    # Tentukan palet warna berdasarkan data
+    filter_kabupaten <- value_filter_kab_genting() 
+    filter_kecamatan <- value_filter_kec_genting()
+    peta_desa_646 <- data_peta()
+    peta_desa_646 <- peta_desa_646 |>
+      fsubset(KAB_KOTA %in% filter_kabupaten & 
+                KECAMATAN %in% filter_kecamatan)
+    pal <- colorNumeric(
+      palette = "YlOrRd",  # Palet warna (contoh: Kuning-Oranye-Merah)
+      domain = peta_desa_646$sasaran_prioritas_genting_1 # Kolom data untuk diwarnai
+    )
+    labels <- sprintf(
+      "Kecamatan <strong>%s</strong> <br/> Desa/Kelurahan <strong>%s</strong><br/> KRS: %g ",
+      peta_desa_646$KECAMATAN, peta_desa_646$DESA_KELUR, peta_desa_646$sasaran_prioritas_genting_1
+    ) %>% lapply(htmltools::HTML)
+    
+    leaflet(data = peta_desa_646) %>%
+      addProviderTiles(providers$OpenStreetMap, group = "Alamat Jalan") %>%
+      addProviderTiles(providers$OpenTopoMap, group = "Topografi") %>%
+      addProviderTiles(providers$Esri.WorldImagery, group = "Citra Satelit") %>%
+      addProviderTiles(providers$Esri.WorldTopoMap, group = "Topo dan Jalan") %>%
+      addLayersControl(
+        baseGroups = c("Alamat Jalan", "Topografi", "Citra Satelit", "Topo dan Jalan"),
+        options = layersControlOptions(collapsed = FALSE)
+      ) %>%
+      addPolygons(
+        fillColor = ~pal(sasaran_prioritas_genting_1),
+        weight = 1,
+        color = "black",
+        fillOpacity = 0.7,
+        highlight = highlightOptions(
+          weight = 3,
+          color = "red",
+          fillOpacity = 0.9,
+          bringToFront = TRUE
+        ),
+        label = labels
+        #popup = ~paste0("Total KRS: ", round(Total, 2), "\n Desa/Kelurahan:", DESA_KELUR)
+      ) %>%
+      addLegend(
+        pal = pal,
+        values = ~sasaran_prioritas_genting_1,
+        position = "bottomright",
+        title = "Jumlah KRS"
+      )
+  })
+  
+  data_titik <- eventReactive(input$cari_genting,{
+    if(input$memiliki_baduta == "Semua"){
+      filter_baduta = c(2,1)
+    } else if(input$memiliki_baduta == "Ya"){
+      filter_baduta = c(1)
+    } else{
+      filter_baduta = c(2)
+    }
+    
+    if(input$memiliki_balita == "Semua"){
+      filter_balita = c(2,1)
+    } else if(input$memiliki_balita == "Ya"){
+      filter_balita = c(1)
+    } else{
+      filter_balita = c(2)
+    }
+    
+    if(input$memiliki_pus_hamil == "Semua"){
+      filter_pus_hamil = c(2,1)
+    } else if(input$memiliki_pus_hamil == "Ya"){
+      filter_pus_hamil = c(1)
+    } else{
+      filter_pus_hamil = c(2)
+    }
+    
+    if(input$air_minum == "Semua"){
+      filter_air_minum = c(2,1)
+    } else if(input$air_minum == "Layak"){
+      filter_air_minum = c(1)
+    } else{
+      filter_air_minum = c(2)
+    }
+    
+    if(input$tempat_bab == "Semua"){
+      filter_bab = c(2,1)
+    } else if(input$tempat_bab == "Layak"){
+      filter_bab = c(1)
+    } else{
+      filter_bab = c(2)
+    }
+    
+    if(input$empat_t == "Semua"){
+      filter_empat_t = c(2,1)
+    } else if(input$empat_t == "Ya"){
+      filter_empat_t = c(1)
+    } else{
+      filter_empat_t = c(2)
+    }
+  
+    data_titik <- verval_krs_peta %>%
+      fsubset(
+        nama_kabupaten %in% value_filter_kab_genting() &
+        nama_kecamatan %in% value_filter_kec_genting() & 
+          punya_baduta %in% filter_baduta &
+          punya_balita %in% filter_balita & 
+          pus_hamil %in% filter_pus_hamil &
+          pus_4t %in% filter_empat_t &
+          kondisi_sumber_air_minum %in% filter_air_minum &
+          kondisi_fasilitas_bab %in% filter_bab &
+          !is.na(longitude) &
+          !is.na(latitude)
+      ) %>%
+      fmutate(longitude = as.numeric(longitude),
+              latitude = as.numeric(latitude))
+  })
+  
+  output$map_genting_titik <- renderLeaflet({
+    data_titik <- data_titik() |>
+      fmutate(kode_keluarga = paste0(substr(kode_keluarga, 1, 15), "xxxxx"))
+    
+    leaflet(data_titik) |>
+      addProviderTiles(providers$Esri.WorldImagery) %>%
+      setView(lng = mean(data_titik$longitude), lat = mean(data_titik$latitude), zoom = 12) |>
+      addMarkers(lng = data_titik$longitude, lat = data_titik$latitude, # Longitude dan Latitude
+                 popup = ~paste(
+                   "<b>Kecamatan:</b>", data_titik$nama_kecamatan, "<br>",
+                   "<b>Desa/Kel:</b>", data_titik$nama_kelurahan, "<br>",
+                   "<b>Kode:</b>", data_titik$kode_keluarga, "<br>"
+                 ), # Popup yang menampilkan nama lokasi
+                 clusterOptions = markerClusterOptions() # Mengaktifkan clustering
+      )
+  })
+  
   # batas genting
 }
 
