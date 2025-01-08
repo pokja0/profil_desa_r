@@ -19,13 +19,6 @@ library(httr)
 daftar_bulan = c("JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER")
 data_poktan = read_fst("data/data_profil_poktan.fst")
 
-rekap_desa_verval_krs <- read_fst("data/rekap_desa_verval_krs.fst")
-
-#sasaran_genting <- fst::read_fst("DATASET KRS SASARAN GENTING/bnba_keluarga_genting_sulawesi barat.fst")
-verval_krs_peta <- fst::read_fst("data/verval_krs_dashboard_peta.fst")
-
-peta_desa_646 <- readRDS("data/BATAS_DESA__SULAWESI_BARAT.rds")
-
 ui = dashboardPage(
   preloader = list(html = tagList(spin_1(), "Mohon ditunggu ya ..."), color = "#343a40"),
   header = dashboardHeader(title = "Profil Desa"),
@@ -2685,6 +2678,12 @@ server = function(input, output, session) {
   # batas krs
 
   # genting
+  rekap_desa_verval_krs <- read_fst("data/rekap_desa_verval_krs.fst")
+  
+  #sasaran_genting <- fst::read_fst("DATASET KRS SASARAN GENTING/bnba_keluarga_genting_sulawesi barat.fst")
+  verval_krs_peta <- fst::read_fst("data/verval_krs_dashboard_peta.fst")
+  
+  peta_desa_646 <- readRDS("data/BATAS_DESA__SULAWESI_BARAT.rds")
   observeEvent(input$kabupaten_genting, {
     if (input$kabupaten_genting == "SEMUA KABUPATEN") {
       
