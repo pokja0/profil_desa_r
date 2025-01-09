@@ -15,13 +15,13 @@ library(bsicons)
 library(stringr)
 library(sf)
 library(httr)
-library(esquisse)
+library(GWalkR)
 
 daftar_bulan = c("JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER")
 data_poktan = read_fst("data/data_profil_poktan.fst")
 
 ui = dashboardPage(
-  preloader = list(html = tagList(spin_1(), "Mohon ditunggu ya ..."), color = "#343a40"),
+  preloader = list(html = tagList(spin_1(), "Sedang menyiapkan ..."), color = "#343a40"),
   header = dashboardHeader(title = "Profil Desa"),
   body = dashboardBody(
     tabItems(
@@ -358,16 +358,7 @@ ui = dashboardPage(
             )
           )
         )
-      ), #tab item
-      tabItem(
-        tabName = "gwaklr",
-        card(
-          esquisse_ui(
-            id = "esquisse", 
-            header = FALSE # dont display gadget title
-          )
-        )
-      )
+      ) #tab item
     )
   ),
   sidebar = dashboardSidebar(
@@ -395,11 +386,6 @@ ui = dashboardPage(
         text = "Genting",
         tabName = "genting",
         icon = icon("people-pulling")
-      ),
-      menuItem(
-        text = "Interaktif",
-        tabName = "gwaklr",
-        icon = icon("bar-chart")
       )
     )
   ) #sidebar
@@ -2914,14 +2900,7 @@ server = function(input, output, session) {
   })
   
   # batas genting
-  
-  #
-  data_r <- read.fst("data/data_umum.fst")
-  results <- esquisse_server(
-    id = "esquisse",
-    data_rv = data_r
-  )
-  #
+
 }
 
 shinyApp(ui, server)

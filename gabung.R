@@ -190,7 +190,9 @@ sdm_kb <- rbind(sdm_kb, sdm_kb_scrap)
 write_fst(sdm_kb, "data/data_faskes_siga.fst")
 
 ##mix
-data_mix_kontra <- read.fst("data/data_mix_kontra.fst")
+data_mix_kontra <- read.fst("data/data_mix_kontra.fst") %>%
+  filter(Bulan != "DESEMBER") %>%
+  filter(Bulan != "")
 data_mix_kontra_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/des - kb_kontra1.xlsx")
 colnames(data_mix_kontra_scrap)[1] <- "V1"
 
