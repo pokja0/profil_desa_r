@@ -36,7 +36,7 @@ ui = dashboardPage(
             ),
             column(3, selectInput("pilih_kec_gu", "Daftar Kecamatan", choices = NULL)),
             column(3, selectInput("pilih_desa_kel_gu", "Pilih Desa/Kel", choices = NULL)),
-            column(3, selectInput("pilih_bulan_gu", "Pilih Bulan", choices = daftar_bulan[1:11], selected = "NOVEMBER"))
+            column(3, selectInput("pilih_bulan_gu", "Pilih Bulan", choices = daftar_bulan[1:12], selected = "DESEMBER"))
           ),
           fluidRow(
             input_task_button(
@@ -89,7 +89,7 @@ ui = dashboardPage(
             ),
             column(3, selectInput("pilih_kec_kb", "Daftar Kecamatan", choices = NULL)),
             column(3, selectInput("pilih_desa_kel_kb", "Pilih Desa/Kel", choices = NULL)),
-            column(3, selectInput("pilih_bulan_kb", "Pilih Bulan", choices = daftar_bulan[1:11], selected = "NOVEMBER"))
+            column(3, selectInput("pilih_bulan_kb", "Pilih Bulan", choices = daftar_bulan[1:12], selected = "DESEMBER"))
           ),
           fluidRow(
             input_task_button(
@@ -159,7 +159,7 @@ ui = dashboardPage(
             ),
             column(3, selectInput("pilih_kec_krs", "Daftar Kecamatan", choices = NULL)),
             column(3, selectInput("pilih_desa_kel_krs", "Pilih Desa/Kel", choices = NULL)),
-            column(3, selectInput("pilih_bulan_krs", "Pilih Bulan", choices = daftar_bulan[1:11], selected = "NOVEMBER"))
+            column(3, selectInput("pilih_bulan_krs", "Pilih Bulan", choices = daftar_bulan[1:12], selected = "DESEMBER"))
           ),
           fluidRow(
             input_task_button(
