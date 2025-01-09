@@ -15,6 +15,7 @@ library(bsicons)
 library(stringr)
 library(sf)
 library(httr)
+library(GWalkR)
 
 daftar_bulan = c("JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER")
 data_poktan = read_fst("data/data_profil_poktan.fst")
@@ -357,7 +358,11 @@ ui = dashboardPage(
             )
           )
         )
-      ) #tab item
+      ), #tab item
+      tabItem(
+        tabName = "gwaklr",
+        gwalkrOutput("data_interaktif")
+      )
     )
   ),
   sidebar = dashboardSidebar(
@@ -385,6 +390,11 @@ ui = dashboardPage(
         text = "Genting",
         tabName = "genting",
         icon = icon("people-pulling")
+      ),
+      menuItem(
+        text = "Interaktif",
+        tabName = "gwaklr",
+        icon = icon("bar-chart")
       )
     )
   ) #sidebar
@@ -2899,6 +2909,12 @@ server = function(input, output, session) {
   })
   
   # batas genting
+  
+  #
+  output$data_interaktif <- renderGwalkr({
+    gwalkr(mtcars)
+  })
+  #
 }
 
 shinyApp(ui, server)
