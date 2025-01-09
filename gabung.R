@@ -180,7 +180,8 @@ write_fst(rdk, "data/data_rdk.fst")
 
 
 ###FASKES
-sdm_kb <- read_fst("data/data_faskes_siga.fst")
+sdm_kb <- read_fst("data/data_faskes_siga.fst") %>%
+  filter(BULAN != "DESEMBER")
 
 sdm_kb_scrap = readxl::read_excel(path = "/home/hi/Documents/projects/Scraping Profil Desa/hasil/des-faskes_siga_724.xlsx")
 colnames(sdm_kb_scrap)[1] <- "V1"

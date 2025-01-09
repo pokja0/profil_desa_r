@@ -361,7 +361,9 @@ ui = dashboardPage(
       ), #tab item
       tabItem(
         tabName = "gwaklr",
-        gwalkrOutput("data_interaktif")
+        card(
+         # gwalkrOutput("data_interaktif")
+        )
       )
     )
   ),
