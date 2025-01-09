@@ -362,7 +362,10 @@ ui = dashboardPage(
       tabItem(
         tabName = "gwaklr",
         card(
-         # gwalkrOutput("data_interaktif")
+          esquisse_ui(
+            id = "esquisse", 
+            header = FALSE # dont display gadget title
+          )
         )
       )
     )
@@ -2913,9 +2916,11 @@ server = function(input, output, session) {
   # batas genting
   
   #
-  output$data_interaktif <- renderGwalkr({
-    gwalkr(mtcars)
-  })
+  data_r <- read.fst("data/data_umum.fst")
+  results <- esquisse_server(
+    id = "esquisse",
+    data_rv = data_r
+  )
   #
 }
 
