@@ -15,7 +15,7 @@ library(bsicons)
 library(stringr)
 library(sf)
 library(httr)
-library(GWalkR)
+library(esquisse)
 
 daftar_bulan = c("JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER")
 data_poktan = read_fst("data/data_profil_poktan.fst")
